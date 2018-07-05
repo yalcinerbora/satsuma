@@ -2,66 +2,67 @@ const express = require('express');
 const router = express.Router();
 const User = require('../mongoose/userModel').User;
 
-// HTTP Methods
-router.get('/users/:id', (req, res, next) =>
-{    
-    // const course = courses.find(c => c.id === parseInt(req.params.id));
+const authAnyUser = require('../authentication').authAnyUser;
+const authAnyUserId = require('../authentication').authAnyUserId;
+const authElevatedUser = require('../authentication').authElevatedUser;
+const authAdminUser = require('../authentication').authAdminUser;
 
-    // User.findById(req.params.id, (err, user) =>
-    // {        
-    //     res.send(user);
-    // });
-    
-    // if(!course) return res.status(404).send(`User with the given id ${req.params.id} not found`);
-    // res.send(course);
+// Static Vars
+const usersApiPath = process.env.USER_API_NAME || 'users';
+
+// GET
+router.get(`/${usersApiPath}`, (req, res, next) =>
+{
+    if(!authAnyUser(req))
+        return res.status(403).send(`Forbidden: You cannot access users.`);
+
+    // Query and return users
 });
 
-router.get('/users', (req, res, next) =>
-{
-    res.send(`users get, auth ${req.privilege}, id ${req.satId}`);
+router.get(`/${usersApiPath}/:id`, (req, res, next) =>
+{   
+    if(!authAnyUser(req))
+        return res.status(403).send(`Forbidden: You cannot access users SAT${id}.`);
+
+    // Query and return user
 });
 
-router.post('/users', (req, res, next) =>
+// POST
+router.post(`/${usersApiPath}/:id`, (req, res, next) =>
 {
-    // // Validate
-    // const { error } = validateCourse(req.body);
-    // if(error) return res.status(400).send(error.details[0].message);
+    if(!authAnyUserId(req, id));
+        return res.status(403).send(`Forbidden: You cannot edit SAT${id}.`);
 
-    // // Add
-    // let user = new User.create(req.body).then((user) =>
-    // {
-    //     res.send(user);
-    // }).catch(next);
-
-    // res.send(course);
+    // Find user and update user
 });
 
-router.put('/users/:id', (req, res, next) =>
+router.post(`/${usersApiPath}/migrate`, (req, res, next) =>
 {
-    // // Find
-    // const course = courses.find(c => c.id === parseInt(req.params.id));
+    if(!authElevatedUser(req, id));
+        return res.status(403).send(`Forbidden: You cannot migrate users.`);
 
-
-    // if(!course) return res.status(404).send(`Course with the given id ${req.params.id} not found`);
-
-    // // Validate
-    // const { error } = validateCourse(req.body);
-    // if(error) return res.status(400).send(error.details[0].message);
-
-    // // Update
-    // course.name = req.body.name;
-    // res.send(course);
+    // Body should containt all data of the nominee
+    // Find nomineee
+    // Crete new user
+    // Return new user
 });
 
-router.delete('/users/:id', (req, res, next) =>
+// PUT
+router.put(`/${usersApiPath}/:id`, (req, res, next) =>
 {
-    // const course = courses.find(c => c.id === parseInt(req.params.id));
-    // if(!course)  return res.status(404).send(`Course with the given id ${req.params.id} not found`);
+    if(!authAdminUser(req))
+        return res.status(403).send(`Forbidden: Only admins can add users.`);
 
-    // const index = courses.indexOf(course);
-    // courses.splice(index, 1);
+    // Directly create user from body
+});
 
-    // res.send(course);
+// DELETE
+router.delete(`/${usersApiPath}/:id`, (req, res, next) =>
+{
+    if(!authAdminUser(req))
+        return res.status(403).send(`Forbidden: Only admins can delete users.`);
+
+    // Directly delete user with given id
 });
 
 module.exports = router;

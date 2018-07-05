@@ -84,5 +84,35 @@ router.post('/login', (req, res, next) =>
     });    
 });
 
+// Accessor convenience
+function anyUser(req)
+{
+    return true;    
+};
+
+function anyUserId(req, id)
+{
+    return ((req.privilege === 'active' && (req.satId === id)) ||
+            req.privilege === 'elevated' ||
+            req.privilege === 'admin');
+}
+
+function elevatedUser(req)
+{
+    return (req.privilege === 'elevated' ||
+            req.privilege === 'admin');
+}
+
+function adminUser(req)
+{
+    return (req.privilege === 'admin');
+}
+
 module.exports.authLayer = authLayer;
 module.exports.loginRouter = router;
+
+// Convenience
+module.exports.authAnyUser = anyUser;
+module.exports.authAnyUserId = anyUserId;
+module.exports.authElevatedUser = elevatedUser;
+module.exports.authAdminUser = adminUser;

@@ -5,9 +5,13 @@ const satAuth = require('./authentication').authLayer;
 const userRoutes = require('./json/users');
 const loginRouter = require('./authentication').loginRouter;
 
+// Statics
+const jsonApiName = process.env.API_NAME ||'satsuma' ;
+const port = process.env.PORT || 3000;
+const mongoDBAdress = process.env.DB_ADRESS || 'mongodb://localhost/satsuma';
+
 // Express
 const app = express();
-
 // -----------
 // Layers
 // -----------
@@ -19,12 +23,12 @@ app.get('/', (req, res) =>
     res.send('index.html missing (upload satıh angular project).');
 });
 // Json Parse Layer
-app.use('/satsuma', express.json());
+app.use(`/${jsonApiName}`, express.json());
 // Auth layer
-app.use('/satsuma', loginRouter);
+app.use(`/${jsonApiName}`, loginRouter);
 app.use(satAuth);
 // Route Layer
-app.use('/satsuma', userRoutes);
+app.use(`/${jsonApiName}`, userRoutes);
 // Error Layer
 app.use((err, req, res, next) =>
 {
@@ -34,10 +38,9 @@ app.use((err, req, res, next) =>
 });
 
 // MongoDB
-mongoose.connect('mongodb://localhost/satsuma');
+mongoose.connect(mongoDBAdress);
 
 // Server Startup
-const port = process.env.PORT || 3000;
 app.listen(port, () =>
 {
     console.log(`Listenting on port ${port}`);
