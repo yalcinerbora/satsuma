@@ -22,12 +22,13 @@ function authLayer(req, res, next)
         
         // Can i blindly thrust these after verify??
         req.privilege = data.privilege;
-        req.satId = data.satId;
+        req.satId = data.satId;        
         next();
     });
+    //return next();
 };
 
-router.get('/login/admin', (req, res, next) =>
+router.put('/login/admin', (req, res, next) =>
 {
     // Init admin for development
     const initAdmin = process.env.ADMIN || false;
@@ -53,19 +54,17 @@ router.get('/login/admin', (req, res, next) =>
 router.post('/login', (req, res, next) =>
 {
     if(!req.body.password) return next({statusCode: 400, message: 'password is not given'});
-
     // Verify User and password
-    User.findOne({satId: req.body.satId}, (err, user) =>
+    User.findOne({satId: req.body.satId}, 'password satId privilege', (err, user) =>
     {
         if(err) return next(err);
         if(!user) return next({statusCode: 404, message: 'user not found.'});
-
         user.comparePassword(req.body.password, (err, isMatch) =>
         {
             if(err) return next(err);
             if(!isMatch) return next({statusCode: 400, message: 'password is incorrect.'});
             else
-            {                
+            {        
                 // Sign and send
                 jwt.sign(
                 {
@@ -109,7 +108,7 @@ function adminUser(req)
 }
 
 module.exports.authLayer = authLayer;
-module.exports.loginRouter = router;
+module.exports.loginRoute = router;
 
 // Convenience
 module.exports.authAnyUser = anyUser;

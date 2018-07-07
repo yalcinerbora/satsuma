@@ -4,6 +4,7 @@ const bcrypt = require('bcrypt');
 const Schema = mongoose.Schema;
 const CourseSchema = require('./courseSchema').CourseSchema;
 const TempCourseSchema = require('./courseSchema').TempCourseSchema;
+const GlobalVariables = require('./globalVarModel').GlobalVariables;
 
 /*
 
@@ -23,7 +24,8 @@ them to the actual user collection
 */
 
 const eMailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
-const numberRegex = /[0-9]*/;
+const phoneNumberRegex = /[0-9]{7}/;
+const numberRegex = /[0-9]+/;
 
 const NomineeSchema = new Schema
 ({
@@ -53,7 +55,7 @@ const UserSchema = new Schema
     {
         type: Number,
         defaults: 0,
-        required: [true, 'SAT Id is required.'],
+        //required: [true, 'SAT Id is required.'],
         unique: true
     },
     lName: 
@@ -75,7 +77,8 @@ const UserSchema = new Schema
     password:
     {
         type: String,
-        required: [true, 'password is mandatory.']
+        required: [function() {return typeof this.password === 'string'? false : true}, 'password is mandatory.'],
+        select: false
     },
     privilege:
     {
@@ -95,7 +98,7 @@ const UserSchema = new Schema
         type: String,
         maxlength: [7, 'phone number is too long or short.'],
         minlength: [7, 'phone number is too long or short.'],
-        match: [numberRegex, 'phone number contains characters.'],
+        match: [phoneNumberRegex, 'phone number contains characters.'],
         default: '0000000',
     },
     adress:
@@ -118,7 +121,7 @@ const UserSchema = new Schema
     padiBrevetNo:
     {
         type: String,
-        match: [numberRegex, 'invalid PADI brevet number.']
+        match: [phoneNumberRegex, 'invalid PADI brevet number.']
     },
     cmasRank:
     {
@@ -199,7 +202,7 @@ UserSchema.methods.comparePassword = function(candidatePassword, callback)
     bcrypt.compare(candidatePassword, this.password, function(err, isMatch) 
     {
         if (err) return callback(err);
-        callback(null, isMatch);
+        callback(null, isMatch); 
     });
 };
 
@@ -210,15 +213,21 @@ const Nominee = mongoose.model('nominee', NomineeSchema);
 // Pre-save functions
 
 // Sat no auto increment
-UserSchema.pre('save', (next) =>
+UserSchema.pre('save', function (next)
 {
     var user = this;
-    User.find({}, (err, users) =>
+    if(user.satId) return next();
+    GlobalVariables.findOneAndUpdate({}, 
+    { 
+        $inc: { satCounter: 1}
+    },
+    (err, globals) =>
     {
-            if(err) throw err;
-            const newSatNo = users.length + 1;
-            user.id = newSatNo;
-            next();
+        console.log(globals.satCounter);
+        if(err) throw err;
+        const newSatNo = globals.satCounter + 1;
+        user.satId = newSatNo;
+        next();
     });
 });
 
@@ -226,7 +235,6 @@ UserSchema.pre('save', (next) =>
 UserSchema.pre('save', function (next)
 {  
     var user = this;
-
     // only hash the password if it has been modified (or is new)
     if (!user.isModified('password')) return next();
 

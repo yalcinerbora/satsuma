@@ -1,9 +1,14 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const satAuth = require('./authentication').authLayer;
+const init = require('./initalize');
 
+// Routers
 const userRoutes = require('./json/users');
-const loginRouter = require('./authentication').loginRouter;
+const nomineeRoutes = require('./json/nominees');
+const campRoutes = require('./json/camps');
+const actionRoutes = require('./json/actions');
+const loginRoute = require('./authentication').loginRoute;
 
 // Statics
 const jsonApiName = process.env.API_NAME ||'satsuma' ;
@@ -24,11 +29,15 @@ app.get('/', (req, res) =>
 });
 // Json Parse Layer
 app.use(`/${jsonApiName}`, express.json());
+// Nomination Layer
+app.use(`/${jsonApiName}`, nomineeRoutes);
 // Auth layer
-app.use(`/${jsonApiName}`, loginRouter);
+app.use(`/${jsonApiName}`, loginRoute);
 app.use(satAuth);
 // Route Layer
 app.use(`/${jsonApiName}`, userRoutes);
+app.use(`/${jsonApiName}`, campRoutes);
+app.use(`/${jsonApiName}`, actionRoutes);
 // Error Layer
 app.use((err, req, res, next) =>
 {
@@ -39,6 +48,13 @@ app.use((err, req, res, next) =>
 
 // MongoDB
 mongoose.connect(mongoDBAdress);
+
+// Init Code
+if(process.env.INIT)
+{
+    console.log('Initializing satsuma backend...');
+    init();
+}
 
 // Server Startup
 app.listen(port, () =>
